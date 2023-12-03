@@ -1,0 +1,71 @@
+# joint
+python main.py --dataset prostate --approach joint --epochs 100 --experiment-name prostate-joint-unet --backbone unet --device-ids 6
+python main.py --dataset mm --target_class i --approach joint --epochs 100 --experiment-name mm-i-joint-unet --backbone unet --device-ids 6
+python main.py --dataset mm --target_class o --approach joint --epochs 100 --experiment-name mm-o-joint-unet --backbone unet --device-ids 6
+python main.py --dataset mm --target_class r --approach joint --epochs 100 --experiment-name mm-r-joint-unet --backbone unet --device-ids 6
+
+# seq
+python main.py --dataset prostate --approach seq --epochs 50 --experiment-name prostate-seq-unet --backbone unet --device-ids 6
+python main.py --dataset mm --target_class i --approach seq --epochs 50 --experiment-name mm-i-seq-unet --backbone unet --device-ids 6
+python main.py --dataset mm --target_class o --approach seq --epochs 50 --experiment-name mm-o-seq-unet --backbone unet --device-ids 6
+python main.py --dataset mm --target_class r --approach seq --epochs 50 --experiment-name mm-r-seq-unet --backbone unet --device-ids 6
+
+# kd
+python main.py --dataset prostate --approach kd --epochs 50 --experiment-name prostate-kd-unet --backbone unet --device-ids 6
+python main.py --dataset mm --target_class i --approach kd --epochs 50 --experiment-name mm-i-kd-unet --backbone unet --device-ids 6
+python main.py --dataset mm --target_class o --approach kd --epochs 50 --experiment-name mm-o-kd-unet --backbone unet --device-ids 6
+python main.py --dataset mm --target_class r --approach kd --epochs 50 --experiment-name mm-r-kd-unet --backbone unet --device-ids 6
+
+# mib
+python main.py --dataset prostate --approach mib --epochs 50 --experiment-name prostate-mib-unet --backbone unet --device-ids 6
+python main.py --dataset mm --target_class i --approach mib --epochs 50 --experiment-name mm-i-mib-unet --backbone unet --device-ids 6
+python main.py --dataset mm --target_class o --approach mib --epochs 50 --experiment-name mm-o-mib-unet --backbone unet --device-ids 6
+python main.py --dataset mm --target_class r --approach mib --epochs 50 --experiment-name mm-r-mib-unet --backbone unet --device-ids 6
+
+# plop
+python main.py --dataset prostate --approach plop --epochs 50 --experiment-name prostate-plop-unet --backbone unet --device-ids 6
+python main.py --dataset mm --target_class i --approach plop --epochs 50 --experiment-name mm-i-plop-unet --backbone unet --device-ids 6
+python main.py --dataset mm --target_class o --approach plop --epochs 50 --experiment-name mm-o-plop-unet --backbone unet --device-ids 6
+python main.py --dataset mm --target_class r --approach plop --epochs 50 --experiment-name mm-r-plop-unet --backbone unet --device-ids 6
+
+# mas
+python main.py --dataset prostate --approach mas --epochs 50 --experiment-name prostate-mas-unet --backbone unet --device-ids 6
+python main.py --dataset mm --target_class i --approach mas --epochs 50 --experiment-name mm-i-mas-unet --backbone unet --device-ids 6
+python main.py --dataset mm --target_class o --approach mas --epochs 50 --experiment-name mm-o-mas-unet --backbone unet --device-ids 6
+python main.py --dataset mm --target_class r --approach mas --epochs 50 --experiment-name mm-r-mas-unet --backbone unet --device-ids 6
+
+# ewc
+python main.py --dataset prostate --approach ewc --epochs 50 --experiment-name prostate-ewc-unet --backbone unet --device-ids 4
+python main.py --dataset mm --target_class i --approach ewc --epochs 50 --experiment-name mm-i-ewc-unet --backbone unet --device-ids 4
+python main.py --dataset mm --target_class o --approach ewc --epochs 50 --experiment-name mm-o-ewc-unet --backbone unet --device-ids 4
+python main.py --dataset mm --target_class r --approach ewc --epochs 50 --experiment-name mm-r-ewc-unet --backbone unet --device-ids 4
+
+# ska
+python main.py --dataset prostate --approach ska --epochs 50 --experiment-name prostate-ska-unet --backbone unet --device-ids 4
+python main.py --dataset mm --target_class i --approach ska --epochs 50 --experiment-name mm-i-ska-unet --backbone unet --device-ids 4
+python main.py --dataset mm --target_class o --approach ska --epochs 50 --experiment-name mm-o-ska-unet --backbone unet --device-ids 4
+python main.py --dataset mm --target_class r --approach ska --epochs 50 --experiment-name mm-r-ska-unet --backbone unet --device-ids 4
+
+# akt gugf=false
+python main.py --dataset prostate --approach akt --epochs 50 --experiment-name prostate-akt-unet --backbone unet --device-ids 4
+python main.py --dataset mm --target_class i --approach akt --epochs 50 --experiment-name mm-i-akt-unet --backbone unet --device-ids 4
+python main.py --dataset mm --target_class o --approach akt --epochs 50 --experiment-name mm-o-akt-unet --backbone unet --device-ids 4
+python main.py --dataset mm --target_class r --approach akt --epochs 50 --experiment-name mm-r-akt-unet --backbone unet --device-ids 4
+
+# akt gugf=true
+python main.py --dataset prostate --approach akt --epochs 50 --experiment-name prostate-aktgugf-unet --backbone unet --device-ids 4 --gugf
+python main.py --dataset mm --target_class i --approach akt --epochs 50 --experiment-name mm-i-aktgugf-unet --backbone unet --device-ids 4 --gugf
+python main.py --dataset mm --target_class o --approach akt --epochs 50 --experiment-name mm-o-aktgugf-unet --backbone unet --device-ids 4 --gugf
+python main.py --dataset mm --target_class r --approach akt --epochs 50 --experiment-name mm-r-aktgugf-unet --backbone unet --device-ids 4 --gugf
+
+# ted gudf=false
+python main.py --dataset prostate --approach ted --epochs 50 --experiment-name prostate-ted-unet --backbone unet --device-ids 4
+python main.py --dataset mm --target_class i --approach ted --epochs 50 --experiment-name mm-i-ted-unet --backbone unet --device-ids 4
+python main.py --dataset mm --target_class o --approach ted --epochs 50 --experiment-name mm-o-ted-unet --backbone unet --device-ids 4
+python main.py --dataset mm --target_class r --approach ted --epochs 50 --experiment-name mm-r-ted-unet --backbone unet --device-ids 4
+
+# ted gudf=true
+python main.py --dataset prostate --approach ted --epochs 50 --experiment-name prostate-tedgugf-unet --backbone unet --device-ids 4 --gugf
+python main.py --dataset mm --target_class i --approach ted --epochs 50 --experiment-name mm-i-tedgugf-unet --backbone unet --device-ids 4 --gugf
+python main.py --dataset mm --target_class o --approach ted --epochs 50 --experiment-name mm-o-tedgugf-unet --backbone unet --device-ids 4 --gugf
+python main.py --dataset mm --target_class r --approach ted --epochs 50 --experiment-name mm-r-tedgugf-unet --backbone unet --device-ids 4 --gugf
