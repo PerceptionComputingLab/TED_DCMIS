@@ -13,50 +13,57 @@ torch.set_num_threads(4)
 config = parse_args_as_dict(sys.argv[1:])
 seed_all(42)
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
-    datasets_ = ['prostate']
-    approaches = ['plop']
-    backbones = ['unet']
+    datasets_ = ["prostate"]
+    approaches = ["plop"]
+    backbones = ["unet"]
     loss_f = LossDice()
-    metrics = ['ScoreDice', 'ScoreIoU', 'ScoreHausdorff']
+    metrics = ["ScoreDice", "ScoreIoU", "ScoreHausdorff"]
     for dataset_ in datasets_:
         for approach in approaches:
             for backbone in backbones:
-                config['experiment_name'] = dataset_ + '-' + approach + '-' + backbone  # 'prostate-kddiffusion-unet'
+                config["experiment_name"] = (
+                    dataset_ + "-" + approach + "-" + backbone
+                )  # 'prostate-kddiffusion-unet'
                 # config['experiment_name'] = dataset_ + '-r' + '-' + approach + '-' + backbone  # 'mm'
                 # config['target_class'] = 'r'
-                config['approach'] = approach
-                config['dataset'] = dataset_
-                config['resume_epoch'] = 40
-                config['device-ids'] = '4'
+                config["approach"] = approach
+                config["dataset"] = dataset_
+                config["resume_epoch"] = 40
+                config["device-ids"] = "4"
                 print(config)
 
-            exp = Experiment(config=config, name=config['experiment_name'], notes='', reload_exp=(
-                config['resume_epoch']
-            ))
-            train_dataloader, test_dataloader, datasets, exp_run, label_inf = get_dataset(config, exp=exp)
-            best_states_file = os.path.join(exp_run.paths['states'], 'val_track.txt')
+            exp = Experiment(
+                config=config,
+                name=config["experiment_name"],
+                notes="",
+                reload_exp=(config["resume_epoch"]),
+            )
+            train_dataloader, test_dataloader, datasets, exp_run, label_inf = (
+                get_dataset(config, exp=exp)
+            )
+            best_states_file = os.path.join(exp_run.paths["states"], "val_track.txt")
             best_states = []
-            with open(best_states_file, 'r') as f:
+            with open(best_states_file, "r") as f:
                 for line in f.readlines():
-                    best_states.append(int(line.replace('\n', '')))
+                    best_states.append(int(line.replace("\n", "")))
             size = 150
-            out_dir = 'background_shift'
+            out_dir = "background_shift"
             if not os.path.exists(out_dir):
                 os.makedirs(out_dir)
 
-            model = get_model(config, nr_labels=label_inf['label_nr'])
-            agent = get_agent(config, model=model, label_names=label_inf['label_names'])
-            if approach == 'seq':
+            model = get_model(config, nr_labels=label_inf["label_nr"])
+            agent = get_agent(config, model=model, label_names=label_inf["label_names"])
+            if approach == "seq":
                 states_old = best_states[-1]
-                agent.restore_state(exp_run.paths['states'], states_old)
+                agent.restore_state(exp_run.paths["states"], states_old)
             else:
                 states_new = best_states[-1]
-                agent.restore_state(exp_run.paths['states'], states_new)
+                agent.restore_state(exp_run.paths["states"], states_new)
                 agent.model.finish()  # change new model with old one, otherwise it fails to restore the state
                 states_new = best_states[-1]
-                agent.restore_state(exp_run.paths['states'], states_new)
+                agent.restore_state(exp_run.paths["states"], states_new)
 
             uncertainty = []
             for j in range(0, len(best_states)):
@@ -66,9 +73,9 @@ if __name__ == '__main__':
 
                 uncertainty_diff = []
                 for i, feature in enumerate(features):
-                    images = feature['inputs']
-                    targets = feature['target']
-                    new_probs = feature['outputs']
+                    images = feature["inputs"]
+                    targets = feature["target"]
+                    new_probs = feature["outputs"]
                     for sample in range(images.shape[0]):
                         image = images[sample][0]
                         target = targets[sample][1]
@@ -81,15 +88,17 @@ if __name__ == '__main__':
                         if np.sum(misclassified) == 0:
                             continue
                         else:
-                            uncertainty_sample = np.sum(entropy * misclassified) / np.sum(misclassified)
+                            uncertainty_sample = np.sum(
+                                entropy * misclassified
+                            ) / np.sum(misclassified)
                             uncertainty_diff.append(uncertainty_sample)
                             continue
 
                 uncertainty.append(np.mean(uncertainty_diff))
 
-            print(approach + ' uncertainty: ', uncertainty)
+            print(approach + " uncertainty: ", uncertainty)
 
-'''
+"""
 result:
 prostate
 seq：0.38413072097203776, 0.4006589883840904, 0.4972383785915587, 0.38588250238986715, 0.5016571520403096, 0.5407959914510456
@@ -119,4 +128,4 @@ plop uncertainty:  [0.5388622997012137, 0.5617190445404212, 0.6148527685753614, 
 seq uncertainty:  [0.44292827268449264, 0.4539756019800355, 0.4818948037037849, 0.4735828782778371]
 kd uncertainty:  [0.6215375353008024, 0.6212542319708404, 0.6624320063680352, 0.6274086879854167]
 
-'''
+"""

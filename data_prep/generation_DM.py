@@ -14,10 +14,12 @@ import numpy as np
 import cv2
 from tqdm import tqdm
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 # diffusion model path
-diffusion_log_path = os.path.join('/home/zhuzhanshi/MedicalCL/storage/data', 'PseudoData')
+diffusion_log_path = os.path.join(
+    "/home/zhuzhanshi/MedicalCL/storage/data", "PseudoData"
+)
 
 
 def linear_beta_schedule(timesteps, start=0.0001, end=0.02):
@@ -45,8 +47,9 @@ def forward_diffusion_sample(x_0, t, device="cpu"):
         sqrt_one_minus_alphas_cumprod, t, x_0.shape
     )
     # mean + variance
-    return sqrt_alphas_cumprod_t.to(device) * x_0.to(device) \
-           + sqrt_one_minus_alphas_cumprod_t.to(device) * noise.to(device), noise.to(device)
+    return sqrt_alphas_cumprod_t.to(device) * x_0.to(
+        device
+    ) + sqrt_one_minus_alphas_cumprod_t.to(device) * noise.to(device), noise.to(device)
 
 
 def sample_timestep(x, t, model):
@@ -63,7 +66,7 @@ def sample_timestep(x, t, model):
 
     # Call model (current image - noise prediction)
     model_mean = sqrt_recip_alphas_t * (
-            x - betas_t * model(x, t) / sqrt_one_minus_alphas_cumprod_t
+        x - betas_t * model(x, t) / sqrt_one_minus_alphas_cumprod_t
     )
     posterior_variance_t = get_index_from_list(posterior_variance, t, x.shape)
 
@@ -80,7 +83,7 @@ def sample_plot_image(out_name, model, device, rgb=True):
     img = torch.randn((1, 1, img_size, img_size), device=device)
 
     plt.figure(figsize=(15, 15))
-    plt.axis('off')
+    plt.axis("off")
 
     num_images = 5
     stepsize = int(T / num_images)
@@ -97,14 +100,16 @@ def sample_plot_image(out_name, model, device, rgb=True):
 
 
 def show_tensor_image(image, out_name, rgb=True):
-    reverse_transforms = transforms.Compose([
-        transforms.Lambda(lambda t: t.clamp(-1, 1)),
-        transforms.Lambda(lambda t: (t + 1) / 2),
-        transforms.Lambda(lambda t: t.permute(1, 2, 0)),  # CHW to HWC
-        transforms.Lambda(lambda t: t * 255.),
-        transforms.Lambda(lambda t: t.numpy().astype(np.uint8)),
-        transforms.ToPILImage(),
-    ])
+    reverse_transforms = transforms.Compose(
+        [
+            transforms.Lambda(lambda t: t.clamp(-1, 1)),
+            transforms.Lambda(lambda t: (t + 1) / 2),
+            transforms.Lambda(lambda t: t.permute(1, 2, 0)),  # CHW to HWC
+            transforms.Lambda(lambda t: t * 255.0),
+            transforms.Lambda(lambda t: t.numpy().astype(np.uint8)),
+            transforms.ToPILImage(),
+        ]
+    )
 
     # Take first image of batch
     if len(image.shape) == 4:
@@ -118,8 +123,13 @@ def show_tensor_image(image, out_name, rgb=True):
         cv2.imwrite(out_name, image)
 
 
-def show_images(data, out_name, num_samples=10, cols=5, ):
-    """ Plots some samples from the dataset """
+def show_images(
+    data,
+    out_name,
+    num_samples=10,
+    cols=5,
+):
+    """Plots some samples from the dataset"""
     plt.figure(figsize=(15, 15))
     for i, img in enumerate(data):
         if i == num_samples:
@@ -140,10 +150,10 @@ def train(sub):
     data = PredictionDataset(subset=sub, size=(args.img_size, args.img_size))
     dataloader = DataLoader(data, batch_size=BATCH_SIZE, shuffle=True, drop_last=True)
 
-    show_images(data, os.path.join(log_path, 'samples.png'))
+    show_images(data, os.path.join(log_path, "samples.png"))
 
     model = SimpleUnet()
-    model = torch.load('model_2d.pkl')  # load well-pretrained weights
+    model = torch.load("model_2d.pkl")  # load well-pretrained weights
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model.to(device)
     optimizer = Adam(model.parameters(), lr=0.001)
@@ -161,40 +171,42 @@ def train(sub):
 
                 if epoch % args.interval == 0 and step == 0:
                     print(f"Epoch {epoch} | step {step:03d} Loss: {loss.item()} ")
-                    log_name = os.path.join(log_path, 'train', str(epoch) + '.png')
+                    log_name = os.path.join(log_path, "train", str(epoch) + ".png")
                     sample_plot_image(log_name, model, device, rgb=True)
 
-    torch.save(model, os.path.join(log_path, 'train', sub + '_2d.pkl'))
+    torch.save(model, os.path.join(log_path, "train", sub + "_2d.pkl"))
 
 
 def inference(sub):
-    model = torch.load(os.path.join(log_path, 'train', sub + '_2d.pkl'))
+    model = torch.load(os.path.join(log_path, "train", sub + "_2d.pkl"))
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model.to(device)
     num_samples = args.inference_n
     with tqdm(total=num_samples) as pbar:
         for i in range(num_samples):
             pbar.update()
-            log_name = os.path.join(log_path, 'inference', str(i).zfill(4) + '.png')
+            log_name = os.path.join(log_path, "inference", str(i).zfill(4) + ".png")
             sample_plot_image(log_name, model, device, rgb=False)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--datasets', type=str, default=['MINF'], help='which dataset to generate')
-    parser.add_argument('--batch-size', type=int, default=8, help='batch size')
-    parser.add_argument('--img-size', type=int, default=96, help='image size')
-    parser.add_argument('--timesteps', type=int, default=300, help='time steps')
-    parser.add_argument('--epochs', type=int, default=300, help='# of epochs')
-    parser.add_argument('--interval', type=int, default=100, help='# of interval')
-    parser.add_argument('--inference_n', type=int, default=100, help='# of inference')
+    parser.add_argument(
+        "--datasets", type=str, default=["MINF"], help="which dataset to generate"
+    )
+    parser.add_argument("--batch-size", type=int, default=8, help="batch size")
+    parser.add_argument("--img-size", type=int, default=96, help="image size")
+    parser.add_argument("--timesteps", type=int, default=300, help="time steps")
+    parser.add_argument("--epochs", type=int, default=300, help="# of epochs")
+    parser.add_argument("--interval", type=int, default=100, help="# of interval")
+    parser.add_argument("--inference_n", type=int, default=100, help="# of inference")
 
     args = parser.parse_args()
 
     # datasets = args.datasets
     # datasets = ['RUNMC', 'BMC', 'I2CVB', 'UCL', 'BIDMC', 'HK',
     #             'HCM', 'DCM', 'NOR', 'MINF', 'RV']
-    datasets = ['Philips', 'GE', 'Canon', 'Siemens']
+    datasets = ["Philips", "GE", "Canon", "Siemens"]
     BATCH_SIZE = args.batch_size
     IMG_SIZE = args.img_size
     epochs = args.epochs  # Try more!
@@ -204,22 +216,22 @@ if __name__ == '__main__':
     betas = linear_beta_schedule(timesteps=T)
 
     # Pre-calculate different terms for closed form
-    alphas = 1. - betas
+    alphas = 1.0 - betas
     alphas_cumprod = torch.cumprod(alphas, axis=0)
     alphas_cumprod_prev = F.pad(alphas_cumprod[:-1], (1, 0), value=1.0)
     sqrt_recip_alphas = torch.sqrt(1.0 / alphas)
     sqrt_alphas_cumprod = torch.sqrt(alphas_cumprod)
-    sqrt_one_minus_alphas_cumprod = torch.sqrt(1. - alphas_cumprod)
-    posterior_variance = betas * (1. - alphas_cumprod_prev) / (1. - alphas_cumprod)
+    sqrt_one_minus_alphas_cumprod = torch.sqrt(1.0 - alphas_cumprod)
+    posterior_variance = betas * (1.0 - alphas_cumprod_prev) / (1.0 - alphas_cumprod)
 
     for subset in datasets:
-        print('start', subset)
+        print("start", subset)
         log_path = os.path.join(diffusion_log_path, subset)
         if not os.path.exists(log_path):
             os.makedirs(log_path)
-            os.makedirs(os.path.join(log_path, 'train'))
-            os.makedirs(os.path.join(log_path, 'inference'))
+            os.makedirs(os.path.join(log_path, "train"))
+            os.makedirs(os.path.join(log_path, "inference"))
         train(subset)
         inference(subset)
 
-    print('Done!!!', datasets)
+    print("Done!!!", datasets)

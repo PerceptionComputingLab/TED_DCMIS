@@ -14,9 +14,9 @@ def save_model_state_dataparallel(model, name, path):
     full_path = os.path.join(path, name)
     state_dict = model.state_dict()
     state_dict_iter = copy(state_dict)
-    # remove DataParallel specific .module 
+    # remove DataParallel specific .module
     for key in state_dict_iter.keys():
-        state_dict[key.replace('.module', '')] = state_dict.pop(key)
+        state_dict[key.replace(".module", "")] = state_dict.pop(key)
     torch.save(state_dict, full_path)
 
 
@@ -28,7 +28,7 @@ def save_model_state(model, name, path):
     torch.save(model.state_dict(), full_path)
 
 
-def load_model_state(model, name, path, device='cpu'):
+def load_model_state(model, name, path, device="cpu"):
     r"""Restores a pytorch model."""
     if os.path.exists(path):
         full_path = os.path.join(path, name)
@@ -48,7 +48,7 @@ def save_optimizer_state(optimizer, name, path):
     torch.save(optimizer.state_dict(), full_path)
 
 
-def load_optimizer_state(optimizer, name, path, device='cpu'):
+def load_optimizer_state(optimizer, name, path, device="cpu"):
     r"""Restores a pytorch optimizer state."""
     if os.path.exists(path):
         full_path = os.path.join(path, name)
@@ -64,7 +64,7 @@ def save_scheduler_state(scheduler, name, path):
     torch.save(scheduler.state_dict(), full_path)
 
 
-def load_scheduler_state(scheduler, name, path, device='cpu'):
+def load_scheduler_state(scheduler, name, path, device="cpu"):
     r"""Loads a scheduler state."""
     if os.path.exists(path):
         full_path = os.path.join(path, name)

@@ -1,11 +1,18 @@
 # TED_DCMIS
-The implementation of our paper "Boosting Knowledge Diversity, Accuracy, and Stability via Tri-Enhanced Distillation for
-Domain Continual Medical Image Segmentation"
+The implementation of our paper ["Boosting Knowledge Diversity, Accuracy, and Stability via Tri-Enhanced Distillation for
+Domain Continual Medical Image Segmentation"](https://www.sciencedirect.com/science/article/abs/pii/S1361841524000379),  Medical Image Analysis (MedIA).
+
+
+
+## Introduction
+
+Domain continual medical image segmentation plays a crucial role in clinical settings. This approach enables segmentation models to continually learn from a sequential data stream across multiple domains. However, it faces the challenge of catastrophic forgetting. Existing methods based on knowledge distillation show potential to address this challenge via a three-stage process: distillation, transfer, and fusion. Yet, each stage presents its unique issues that, collectively, amplify the problem of catastrophic forgetting. To address these issues at each stage, we propose a tri-enhanced distillation framework. (1) Stochastic Knowledge Augmentation reduces redundancy in knowledge, thereby increasing both the diversity and volume of knowledge derived from the old network. (2) Adaptive Knowledge Transfer selectively captures critical information from the old knowledge, facilitating a more accurate knowledge transfer. (3) Global Uncertainty-Guided Fusion introduces a global uncertainty view of the dataset to fuse the old and new knowledge with reduced bias, promoting a more stable knowledge fusion. Our experimental results not only validate the feasibility of our approach, but also demonstrate its superior performance compared to state-of-the-art methods. We suggest that our innovative tri-enhanced distillation framework may establish a robust benchmark for domain continual medical image segmentation.
 
 ## Requirements
-pip install -r requirements.txt
+- Python 3.8.15
+- pip install -r requirements.txt
 
-## project structure
+## Project structure
 ```
    --ablation_study/
    --analysis/
@@ -54,6 +61,21 @@ pip install -r requirements.txt
     python ablation_study/gvu_mm_plot.py
     
 ```
+### Acknowledgement:
+
+Our code is inspired from <a href="https://github.com/MECLabTUDA/ACS
+">ACS</a>.
+
 
 ## Citation
-```
+
+```bash 
+@article{ZHU2024103112,
+title = {Boosting knowledge diversity, accuracy, and stability via tri-enhanced distillation for domain continual medical image segmentation},
+journal = {Medical Image Analysis},
+volume = {94},
+pages = {103112},
+year = {2024},
+issn = {1361-8415},
+author = {Zhanshi Zhu and Xinghua Ma and Wei Wang and Suyu Dong and Kuanquan Wang and Lianming Wu and Gongning Luo and Guohua Wang and Shuo Li},
+}

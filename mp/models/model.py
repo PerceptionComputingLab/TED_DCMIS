@@ -18,7 +18,7 @@ class Model(nn.Module):
     Args:
         input_shape tuple (int): Input shape with the form
             (channels, width, height, Opt(depth))
-        output_shape (Obj): output shape, which takes different forms depending 
+        output_shape (Obj): output shape, which takes different forms depending
             on the problem
     """
 
@@ -31,16 +31,22 @@ class Model(nn.Module):
         self.output_shape = output_shape
 
     def init_backbone(self):
-        if self.backbone == 'unet':
-            self.unet_new = UNet2D(self.input_shape, self.nr_labels, dropout=self.unet_dropout,
-                                   monte_carlo_dropout=self.unet_monte_carlo_dropout,
-                                   preactivation=self.unet_preactivation)
-        elif self.backbone == 'swinunet':
-            self.unet_new = SwinUnet(input_shape=self.input_shape[1], nr_labels=self.nr_labels)
+        if self.backbone == "unet":
+            self.unet_new = UNet2D(
+                self.input_shape,
+                self.nr_labels,
+                dropout=self.unet_dropout,
+                monte_carlo_dropout=self.unet_monte_carlo_dropout,
+                preactivation=self.unet_preactivation,
+            )
+        elif self.backbone == "swinunet":
+            self.unet_new = SwinUnet(
+                input_shape=self.input_shape[1], nr_labels=self.nr_labels
+            )
         self.unet_old = None
 
     def preprocess_input(self, x):
-        r"""E.g. pretrained features. Override if needed. """
+        r"""E.g. pretrained features. Override if needed."""
         return x
 
     def forward(self, x):
@@ -94,17 +100,22 @@ class Model(nn.Module):
         return unet
 
     def finish(self):
-        r"""Finish training, store current U-Net as old U-Net
-        """
+        r"""Finish training, store current U-Net as old U-Net"""
         unet_new_state_dict = self.unet_new.state_dict()
         if next(self.unet_new.parameters()).is_cuda:
             device = next(self.unet_new.parameters()).device
-        if self.backbone == 'unet':
-            self.unet_old = UNet2D(self.input_shape, self.nr_labels, dropout=self.unet_dropout,
-                                   monte_carlo_dropout=self.unet_monte_carlo_dropout,
-                                   preactivation=self.unet_preactivation)
-        elif self.backbone == 'swinunet':
-            self.unet_old = SwinUnet(input_shape=self.input_shape[1], nr_labels=self.nr_labels)
+        if self.backbone == "unet":
+            self.unet_old = UNet2D(
+                self.input_shape,
+                self.nr_labels,
+                dropout=self.unet_dropout,
+                monte_carlo_dropout=self.unet_monte_carlo_dropout,
+                preactivation=self.unet_preactivation,
+            )
+        elif self.backbone == "swinunet":
+            self.unet_old = SwinUnet(
+                input_shape=self.input_shape[1], nr_labels=self.nr_labels
+            )
         self.unet_old.load_state_dict(unet_new_state_dict)
         self.unet_old = self.freeze_unet(self.unet_old)
 
@@ -119,6 +130,8 @@ class Model(nn.Module):
             weight_decay (float): weight decay
         """
         if optimizer == optim.SGD:
-            self.unet_optim = optimizer(self.unet_new.parameters(), lr=lr, weight_decay=weight_decay)
+            self.unet_optim = optimizer(
+                self.unet_new.parameters(), lr=lr, weight_decay=weight_decay
+            )
         else:
             self.unet_optim = optimizer(self.unet_new.parameters(), lr=lr)

@@ -9,13 +9,25 @@ class UNETAgent(SegmentationAgent):
     r"""An Agent for a simple U-Net model."""
 
     def __init__(self, *args, **kwargs):
-        if 'metrics' not in kwargs:
-            kwargs['metrics'] = ['ScoreDice', 'ScoreIoU', 'ScoreHausdorff']
+        if "metrics" not in kwargs:
+            kwargs["metrics"] = ["ScoreDice", "ScoreIoU", "ScoreHausdorff"]
         super().__init__(*args, **kwargs)
 
-    def train(self, results, loss_f, train_dataloader, test_dataloader, config, init_epoch=0, nr_epochs=100,
-              eval_datasets=dict(), save_path='', dataset_index=0, exp_path=''):
-        r"""Train a model through its agent. Performs training epochs, 
+    def train(
+        self,
+        results,
+        loss_f,
+        train_dataloader,
+        test_dataloader,
+        config,
+        init_epoch=0,
+        nr_epochs=100,
+        eval_datasets=dict(),
+        save_path="",
+        dataset_index=0,
+        exp_path="",
+    ):
+        r"""Train a model through its agent. Performs training epochs,
         tracks metrics and saves model states.
 
         Args:
@@ -30,25 +42,28 @@ class UNETAgent(SegmentationAgent):
             save_path (str): save path for saving model, etc.
 
         """
-        run_loss_print_interval = config['run_loss_print_interval']
-        save_interval = config['save_interval']
-        val_best = config['val_best']
-        self.agent_state_dict['epoch'] = init_epoch
+        run_loss_print_interval = config["run_loss_print_interval"]
+        save_interval = config["save_interval"]
+        val_best = config["val_best"]
+        self.agent_state_dict["epoch"] = init_epoch
 
-        self.best_validation_value = 0.
+        self.best_validation_value = 0.0
         self.best_validation_epoch = 0
 
         for epoch in range(init_epoch, nr_epochs):
-            print('Epoch:', epoch)
-            self.agent_state_dict['epoch'] = epoch
+            print("Epoch:", epoch)
+            self.agent_state_dict["epoch"] = epoch
 
             print_run_loss = (epoch + 1) % run_loss_print_interval == 0
             print_run_loss = print_run_loss and self.verbose
-            acc = self.perform_training_epoch(loss_f, train_dataloader, config,
-                                              print_run_loss=print_run_loss)
+            acc = self.perform_training_epoch(
+                loss_f, train_dataloader, config, print_run_loss=print_run_loss
+            )
             if val_best:
-                dice = self.track_validation_metrics(dataset_index, loss_f, eval_datasets, save_path, epoch, acc)
-                print('validation dice:', dice)
+                dice = self.track_validation_metrics(
+                    dataset_index, loss_f, eval_datasets, save_path, epoch, acc
+                )
+                print("validation dice:", dice)
                 if dice > self.best_validation_value:
                     self.best_validation_value = dice
                     self.best_validation_epoch = epoch
@@ -61,25 +76,31 @@ class UNETAgent(SegmentationAgent):
 
         if val_best:
             self.restore_state(exp_path, self.best_validation_epoch + 1)
-            with open(os.path.join(exp_path, 'val_track.txt'), 'a+') as f:
-                f.writelines(str(self.best_validation_epoch + 1) + '\n')
-            print('best epoch is ', self.best_validation_epoch + 1, '; best val dice is', self.best_validation_value)
+            with open(os.path.join(exp_path, "val_track.txt"), "a+") as f:
+                f.writelines(str(self.best_validation_epoch + 1) + "\n")
+            print(
+                "best epoch is ",
+                self.best_validation_epoch + 1,
+                "; best val dice is",
+                self.best_validation_value,
+            )
         self.track_metrics(nr_epochs, results, loss_f, eval_datasets)
 
-    def perform_training_epoch(self, loss_f, train_dataloader, config,
-                               print_run_loss=False):
+    def perform_training_epoch(
+        self, loss_f, train_dataloader, config, print_run_loss=False
+    ):
         r"""Perform a training epoch
-        
+
         Args:
             loss_f (mp.eval.losses.loss_abstract.LossAbstract): loss function for the segmenter
             train_dataloader (torch.utils.data.DataLoader): dataloader of training set
             config (dict): configuration dictionary from parsed arguments
             print_run_loss (boolean): whether to print running loss
-        
+
         Returns:
             acc (mp.eval.accumulator.Accumulator): accumulator holding losses
         """
-        acc = Accumulator('loss')
+        acc = Accumulator("loss")
         start_time = time.time()
 
         for data in tqdm(train_dataloader, disable=True):
@@ -100,10 +121,14 @@ class UNETAgent(SegmentationAgent):
 
             self.model.unet_optim.step()
 
-            acc.add('loss', float(loss.detach().cpu()), count=len(inputs))
-            acc.add('loss_seg', float(loss_seg.detach().cpu()), count=len(inputs))
+            acc.add("loss", float(loss.detach().cpu()), count=len(inputs))
+            acc.add("loss_seg", float(loss_seg.detach().cpu()), count=len(inputs))
 
         if print_run_loss:
-            print('\nrunning loss: {} - time/epoch {}'.format(acc.mean('loss'), round(time.time() - start_time, 4)))
+            print(
+                "\nrunning loss: {} - time/epoch {}".format(
+                    acc.mean("loss"), round(time.time() - start_time, 4)
+                )
+            )
 
         return acc

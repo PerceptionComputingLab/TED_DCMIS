@@ -10,16 +10,29 @@ from mp.eval.inference.predict import softmax
 
 class MASAgent(SegmentationAgent):
     r"""Extension of Segmentatio Agent to support Memory Aware Synapses for brain segmentation
-    as porposed in Importance driven continual learning for segmentation across domains by Oezguen et al., 2020"""
+    as porposed in Importance driven continual learning for segmentation across domains by Oezguen et al., 2020
+    """
 
     def __init__(self, *args, **kwargs):
-        if 'metrics' not in kwargs:
-            kwargs['metrics'] = ['ScoreDice', 'ScoreIoU', 'ScoreHausdorff']
+        if "metrics" not in kwargs:
+            kwargs["metrics"] = ["ScoreDice", "ScoreIoU", "ScoreHausdorff"]
         super().__init__(*args, **kwargs)
 
-    def train(self, results, loss_f, train_dataloader, test_dataloader, config, init_epoch=0, nr_epochs=100,
-              eval_datasets=dict(), save_path='', dataset_index=0, exp_path=''):
-        r"""Train a model through its agent. Performs training epochs, 
+    def train(
+        self,
+        results,
+        loss_f,
+        train_dataloader,
+        test_dataloader,
+        config,
+        init_epoch=0,
+        nr_epochs=100,
+        eval_datasets=dict(),
+        save_path="",
+        dataset_index=0,
+        exp_path="",
+    ):
+        r"""Train a model through its agent. Performs training epochs,
         tracks metrics and saves model states.
 
         Args:
@@ -32,25 +45,28 @@ class MASAgent(SegmentationAgent):
             init_epoch (int): initial epoch
             nr_epochs (int): number of epochs to train for
         """
-        run_loss_print_interval = config['run_loss_print_interval']
-        save_interval = config['save_interval']
-        val_best = config['val_best']
-        self.agent_state_dict['epoch'] = init_epoch
+        run_loss_print_interval = config["run_loss_print_interval"]
+        save_interval = config["save_interval"]
+        val_best = config["val_best"]
+        self.agent_state_dict["epoch"] = init_epoch
 
-        self.best_validation_value = 0.
+        self.best_validation_value = 0.0
         self.best_validation_epoch = 0
 
         for epoch in range(init_epoch, nr_epochs):
-            print('Epoch:', epoch)
-            self.agent_state_dict['epoch'] = epoch
+            print("Epoch:", epoch)
+            self.agent_state_dict["epoch"] = epoch
 
             print_run_loss = (epoch + 1) % run_loss_print_interval == 0
             print_run_loss = print_run_loss and self.verbose
-            acc = self.perform_training_epoch(loss_f, train_dataloader, config,
-                                              print_run_loss=print_run_loss)
+            acc = self.perform_training_epoch(
+                loss_f, train_dataloader, config, print_run_loss=print_run_loss
+            )
             if val_best:
-                dice = self.track_validation_metrics(dataset_index, loss_f, eval_datasets, save_path, epoch, acc)
-                print('validation dice:', dice)
+                dice = self.track_validation_metrics(
+                    dataset_index, loss_f, eval_datasets, save_path, epoch, acc
+                )
+                print("validation dice:", dice)
                 if dice > self.best_validation_value:
                     self.best_validation_value = dice
                     self.best_validation_epoch = epoch
@@ -67,28 +83,35 @@ class MASAgent(SegmentationAgent):
 
         if val_best:
             self.restore_state(exp_path, self.best_validation_epoch + 1)
-            with open(os.path.join(exp_path, 'val_track.txt'), 'a+') as f:
-                f.writelines(str(self.best_validation_epoch + 1) + '\n')
-            print('best epoch is ', self.best_validation_epoch + 1, '; best val dice is', self.best_validation_value)
+            with open(os.path.join(exp_path, "val_track.txt"), "a+") as f:
+                f.writelines(str(self.best_validation_epoch + 1) + "\n")
+            print(
+                "best epoch is ",
+                self.best_validation_epoch + 1,
+                "; best val dice is",
+                self.best_validation_value,
+            )
 
         self.track_metrics(nr_epochs, results, loss_f, eval_datasets)
         new_importance_weights = self.calc_importance_weights(train_dataloader)
         self.model.update_importance_weights(new_importance_weights)
         self.model.finish()
 
-    def perform_training_epoch(self, loss_f, train_dataloader, config, print_run_loss=False):
+    def perform_training_epoch(
+        self, loss_f, train_dataloader, config, print_run_loss=False
+    ):
         r"""Perform a training epoch
-        
+
         Args:
             loss_f (mp.eval.losses.loss_abstract.LossAbstract): loss function for the segmenter
             train_dataloader (torch.utils.data.DataLoader): dataloader of training set
             config (dict): configuration dictionary from parsed arguments
             print_run_loss (boolean): whether to print running loss
-        
+
         Returns:
             acc (mp.eval.accumulator.Accumulator): accumulator holding losses
         """
-        acc = Accumulator('loss')
+        acc = Accumulator("loss")
         start_time = time.time()
 
         for data in tqdm(train_dataloader, disable=True):
@@ -108,29 +131,43 @@ class MASAgent(SegmentationAgent):
             else:
                 loss_mas = torch.zeros(1)
 
-            if self.model.importance_weights != None and not config['unet_only']:
-                model_parameters_new = filter(lambda p: p.requires_grad, self.model.unet_new.parameters())
-                model_parameters_old = filter(lambda p: p.requires_grad, self.model.unet_old.parameters())
+            if self.model.importance_weights != None and not config["unet_only"]:
+                model_parameters_new = filter(
+                    lambda p: p.requires_grad, self.model.unet_new.parameters()
+                )
+                model_parameters_old = filter(
+                    lambda p: p.requires_grad, self.model.unet_old.parameters()
+                )
 
-                for param_old, param_new, weights in zip(self.model.unet_old.parameters(),
-                                                         self.model.unet_new.parameters(),
-                                                         self.model.importance_weights):
+                for param_old, param_new, weights in zip(
+                    self.model.unet_old.parameters(),
+                    self.model.unet_new.parameters(),
+                    self.model.importance_weights,
+                ):
                     if param_new.requires_grad:
-                        loss_mas += torch.sum(weights * (param_new - param_old) ** 2) / self.model.n_params_unet
+                        loss_mas += (
+                            torch.sum(weights * (param_new - param_old) ** 2)
+                            / self.model.n_params_unet
+                        )
 
-            loss = loss_seg + config['lambda_d'] * loss_mas
+            loss = loss_seg + config["lambda_d"] * loss_mas
 
             loss.backward()
 
             self.model.unet_optim.step()
 
-            acc.add('loss', float(loss.detach().cpu()), count=len(inputs))
-            acc.add('loss_seg', float(loss_seg.detach().cpu()), count=len(inputs))
-            acc.add('loss_mas', float(loss_mas.detach().cpu()), count=len(inputs))
+            acc.add("loss", float(loss.detach().cpu()), count=len(inputs))
+            acc.add("loss_seg", float(loss_seg.detach().cpu()), count=len(inputs))
+            acc.add("loss_mas", float(loss_mas.detach().cpu()), count=len(inputs))
 
         if print_run_loss:
-            print('\nrunning loss: {} - mas: {} - time/epoch {}'.format(acc.mean('loss'), acc.mean('loss_mas'),
-                                                                        round(time.time() - start_time, 4)))
+            print(
+                "\nrunning loss: {} - mas: {} - time/epoch {}".format(
+                    acc.mean("loss"),
+                    acc.mean("loss_mas"),
+                    round(time.time() - start_time, 4),
+                )
+            )
 
         return acc
 
@@ -142,7 +179,7 @@ class MASAgent(SegmentationAgent):
 
         Args:
             dataloader (Dataloader): training dataloader
-        
+
         Returns:
             (torch.Tensor) parameter gradients/importance weights
         """

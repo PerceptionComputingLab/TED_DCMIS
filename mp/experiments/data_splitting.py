@@ -12,9 +12,13 @@ import math
 
 
 def split_dataset(
-        dataset, test_ratio=0.2, val_ratio=0.2,
-        nr_repetitions=5, cross_validation=True,
-        respecting_groups=True):
+    dataset,
+    test_ratio=0.2,
+    val_ratio=0.2,
+    nr_repetitions=5,
+    cross_validation=True,
+    respecting_groups=True,
+):
     r"""Splits a dataset into different index folds.
 
     Args:
@@ -26,45 +30,62 @@ def split_dataset(
         cross_validation (bool): are the repetitions cross-val folds?
         respecting_groups (bool): do not place examples with the same group in
             the same fold
-    
-    Returns (list[dict[str -> list[int]]]): A list of length 'nr_repetitions' 
+
+    Returns (list[dict[str -> list[int]]]): A list of length 'nr_repetitions'
         where each item is a dictionary with keys 'train', 'val' and 'test'.
     """
     splits = []
     if cross_validation:
-        folds = create_instance_folds(dataset=dataset, k=nr_repetitions,
-                                      exclude_ixs=dataset.hold_out_ixs, stratisfied=True,
-                                      respecting_groups=respecting_groups)
+        folds = create_instance_folds(
+            dataset=dataset,
+            k=nr_repetitions,
+            exclude_ixs=dataset.hold_out_ixs,
+            stratisfied=True,
+            respecting_groups=respecting_groups,
+        )
         for k in range(nr_repetitions):
-            print('Cross-validation fold k {} of {}'.format(k + 1, nr_repetitions))
+            print("Cross-validation fold k {} of {}".format(k + 1, nr_repetitions))
             train, val = [], []
             for j in range(nr_repetitions):
                 if j != k:
                     train += folds[j]
             if val_ratio > 0:
-                train, val = split_instances(dataset=dataset, ratio=1 - val_ratio,
-                                             exclude_ixs=dataset.hold_out_ixs + folds[k],
-                                             stratisfied=True, respecting_groups=respecting_groups)
-            splits.append({'train': train, 'val': val, 'test': folds[k]})
+                train, val = split_instances(
+                    dataset=dataset,
+                    ratio=1 - val_ratio,
+                    exclude_ixs=dataset.hold_out_ixs + folds[k],
+                    stratisfied=True,
+                    respecting_groups=respecting_groups,
+                )
+            splits.append({"train": train, "val": val, "test": folds[k]})
     else:
         for k in range(nr_repetitions):
-            print('Repetition k {} of {}'.format(k + 1, nr_repetitions))
-            train_val, test = split_instances(dataset=dataset,
-                                              ratio=1 - test_ratio, exclude_ixs=dataset.hold_out_ixs,
-                                              stratisfied=True, respecting_groups=respecting_groups)
+            print("Repetition k {} of {}".format(k + 1, nr_repetitions))
+            train_val, test = split_instances(
+                dataset=dataset,
+                ratio=1 - test_ratio,
+                exclude_ixs=dataset.hold_out_ixs,
+                stratisfied=True,
+                respecting_groups=respecting_groups,
+            )
             if val_ratio > 0:
-                train, val = split_instances(dataset=dataset, ratio=1 - val_ratio,
-                                             exclude_ixs=dataset.hold_out_ixs + test, stratisfied=True,
-                                             respecting_groups=respecting_groups)
+                train, val = split_instances(
+                    dataset=dataset,
+                    ratio=1 - val_ratio,
+                    exclude_ixs=dataset.hold_out_ixs + test,
+                    stratisfied=True,
+                    respecting_groups=respecting_groups,
+                )
             else:
                 train, val = train_val, []
-            splits.append({'train': train, 'val': val, 'test': test})
+            splits.append({"train": train, "val": val, "test": test})
     return splits
 
 
-def split_instances(dataset, ratio=0.7, exclude_ixs=[], stratisfied=True,
-                    respecting_groups=True):
-    r"""Divides instances into two stratisfied sets. The stratification 
+def split_instances(
+    dataset, ratio=0.7, exclude_ixs=[], stratisfied=True, respecting_groups=True
+):
+    r"""Divides instances into two stratisfied sets. The stratification
     operations prefers to give more examples of underrepresented classes
     to smaller sets (when the examples in a class cannot be split without
     a remainder).
@@ -75,7 +96,7 @@ def split_instances(dataset, ratio=0.7, exclude_ixs=[], stratisfied=True,
         stratisfied (bool): should there be ca. as any examples for each class?
         respecting_groups (bool): do not place examples with the same group in
             the same fold
-    
+
     Returns (tuple[list[int]]): 2 index lists with the indexes
     """
     ixs = range(dataset.size)
@@ -83,32 +104,42 @@ def split_instances(dataset, ratio=0.7, exclude_ixs=[], stratisfied=True,
     first_ds_len = math.floor(len(ixs) * ratio)
     if not stratisfied:
         random.shuffle(ixs)
-        return _split_ixs(ixs, first_ds_len=first_ds_len,
-                          instances=dataset.instances, respecting_groups=respecting_groups)
+        return _split_ixs(
+            ixs,
+            first_ds_len=first_ds_len,
+            instances=dataset.instances,
+            respecting_groups=respecting_groups,
+        )
     else:
         ixs_1, ixs_2 = [], []
-        class_instances = {class_name: dataset.get_class_instance_ixs(
-            class_name=class_name, exclude_ixs=exclude_ixs) for class_name
-            in dataset.classes}
+        class_instances = {
+            class_name: dataset.get_class_instance_ixs(
+                class_name=class_name, exclude_ixs=exclude_ixs
+            )
+            for class_name in dataset.classes
+        }
         classes = list(dataset.classes)
         classes.sort(key=lambda x: len(class_instances[x]))
         for class_name in classes:
             # print('Class: {}'.format(class_name))
             ixs = class_instances[class_name]
             random.shuffle(ixs)
-            # The mayority class is used to fill to the desired number of 
+            # The mayority class is used to fill to the desired number of
             # examples for each split
             if class_name == classes[-1]:
                 remaining_exs_nr = first_ds_len - len(ixs_1)
                 if remaining_exs_nr == len(ixs):
                     # raise RuntimeError(
                     #     'Not enough examples of class {}'.format(class_name))
-                    print('Using all examples for training!')
+                    print("Using all examples for training!")
                     ixs_1 += ixs
                 else:
-                    class_ixs_1, class_ixs_2 = _split_ixs(ixs,
-                                                          first_ds_len=remaining_exs_nr, instances=dataset.instances,
-                                                          respecting_groups=respecting_groups)
+                    class_ixs_1, class_ixs_2 = _split_ixs(
+                        ixs,
+                        first_ds_len=remaining_exs_nr,
+                        instances=dataset.instances,
+                        respecting_groups=respecting_groups,
+                    )
                     ixs_1 += class_ixs_1
                     ixs_2 += class_ixs_2
             # Otherwise, the operation makes sure less-represented classes
@@ -118,22 +149,26 @@ def split_instances(dataset, ratio=0.7, exclude_ixs=[], stratisfied=True,
                 if nr_class_first_ds == len(ixs):
                     # raise RuntimeError(
                     #     'Not enough examples of class {}'.format(class_name))
-                    print('Using all examples for training!')
+                    print("Using all examples for training!")
                     ixs_1 += ixs
 
                 else:
-                    class_ixs_1, class_ixs_2 = _split_ixs(ixs,
-                                                          first_ds_len=nr_class_first_ds, instances=dataset.instances,
-                                                          respecting_groups=respecting_groups)
+                    class_ixs_1, class_ixs_2 = _split_ixs(
+                        ixs,
+                        first_ds_len=nr_class_first_ds,
+                        instances=dataset.instances,
+                        respecting_groups=respecting_groups,
+                    )
                     ixs_1 += class_ixs_1
                     ixs_2 += class_ixs_2
     assert len(set(ixs_1 + ixs_2 + exclude_ixs)) == len(dataset.instances)
     return ixs_1, ixs_2
 
 
-def create_instance_folds(dataset, k=5, exclude_ixs=[],
-                          stratisfied=True, respecting_groups=True):
-    r"""Divides instances into k stratisfied sets. Always, the most examples of 
+def create_instance_folds(
+    dataset, k=5, exclude_ixs=[], stratisfied=True, respecting_groups=True
+):
+    r"""Divides instances into k stratisfied sets. Always, the most examples of
     a class (when not divisible) are added to the fold that currently has
     the least examples.
 
@@ -143,7 +178,7 @@ def create_instance_folds(dataset, k=5, exclude_ixs=[],
         stratisfied (bool): should there be ca. as any examples for each class?
         respecting_groups (bool): do not place examples with the same group in
             the same fold
-    
+
     Returns (tuple[list[int]]): k index lists with the indexes
     """
     ixs = range(dataset.size)
@@ -152,9 +187,12 @@ def create_instance_folds(dataset, k=5, exclude_ixs=[],
         return _divide_sets_similar_length(dataset.instances, ixs, k, respecting_groups)
     else:
         folds = [[] for k_ix in range(k)]
-        class_instances = {class_name: dataset.get_class_instance_ixs(
-            class_name=class_name, exclude_ixs=exclude_ixs) for
-            class_name in dataset.classes}
+        class_instances = {
+            class_name: dataset.get_class_instance_ixs(
+                class_name=class_name, exclude_ixs=exclude_ixs
+            )
+            for class_name in dataset.classes
+        }
         classes = list(dataset.classes)
         classes.sort(key=lambda x: len(class_instances[x]))
         for class_name in classes:
@@ -162,15 +200,19 @@ def create_instance_folds(dataset, k=5, exclude_ixs=[],
             exs = class_instances[class_name]
             # Sort so folds with least examples come first
             folds.sort(key=lambda x: len(x))
-            divided_exs = _divide_sets_similar_length(dataset.instances, exs, k, respecting_groups)
+            divided_exs = _divide_sets_similar_length(
+                dataset.instances, exs, k, respecting_groups
+            )
             for i in range(len(divided_exs)):
                 folds[i] += divided_exs[i]
-    assert sum([len(fold) for fold in folds]) + len(exclude_ixs) == len(dataset.instances)
+    assert sum([len(fold) for fold in folds]) + len(exclude_ixs) == len(
+        dataset.instances
+    )
     return folds
 
 
 def _divide_sets_similar_length(instances, exs, k, respecting_groups=True):
-    r"""Divides a list exs into k sets of similar length, with the initial 
+    r"""Divides a list exs into k sets of similar length, with the initial
     ones being longer.
     """
     random.shuffle(exs)
@@ -180,7 +222,7 @@ def _divide_sets_similar_length(instances, exs, k, respecting_groups=True):
         # Calculate number of examples per fold
         nr_per_fold, remaining = divmod(len(exs), k)
         if nr_per_fold < 1:
-            raise RuntimeError('Not enough examples.')
+            raise RuntimeError("Not enough examples.")
         nr_per_fold_final = []
         for _ in range(k):
             nr_exs = nr_per_fold
@@ -204,7 +246,7 @@ def _divide_sets_similar_length(instances, exs, k, respecting_groups=True):
         # Calculate number of groups per fold
         nr_per_fold, remaining = divmod(len(ixs_groups.keys()), k)
         if nr_per_fold < 1:
-            raise RuntimeError('Not enough groups.')
+            raise RuntimeError("Not enough groups.")
         nr_per_fold_final = []
         for _ in range(k):
             nr_exs = nr_per_fold
@@ -223,13 +265,12 @@ def _divide_sets_similar_length(instances, exs, k, respecting_groups=True):
                 nr_fold_groups = 0
         # Return divided indexes
         for fold in folds:
-            assert len(fold) > 0, 'Not enough examples'
+            assert len(fold) > 0, "Not enough examples"
     return folds
 
 
 def _split_ixs(ixs, first_ds_len, instances, respecting_groups=True):
-    r"""Returns two lists of indexes, which are subsets of ixs.
-    """
+    r"""Returns two lists of indexes, which are subsets of ixs."""
     if not respecting_groups or instances[0].group_id == None:
         return ixs[:first_ds_len], ixs[first_ds_len:]
     else:
@@ -248,5 +289,5 @@ def _split_ixs(ixs, first_ds_len, instances, respecting_groups=True):
             else:
                 ixs_1 += ix_lst
         # Return divided indexes
-        assert len(ixs_1) > 0 and len(ixs_2) > 0, 'Not enough examples'
+        assert len(ixs_1) > 0 and len(ixs_2) > 0, "Not enough examples"
         return ixs_1, ixs_2

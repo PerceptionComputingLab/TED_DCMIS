@@ -2,20 +2,21 @@ from mp.models.model import Model
 
 
 class MIB(Model):
-    r"""Knowledge Distillation as porposed in Incremental learning techniques for semantic segmentation 
+    r"""Knowledge Distillation as porposed in Incremental learning techniques for semantic segmentation
     by Michieli, U., Zanuttigh, P., 2019
     """
 
-    def __init__(self,
-                 input_shape=(1, 256, 256),
-                 nr_labels=2,
-                 backbone='unet',
-                 unet_dropout=0,
-                 unet_monte_carlo_dropout=0,
-                 unet_preactivation=False
-                 ):
+    def __init__(
+        self,
+        input_shape=(1, 256, 256),
+        nr_labels=2,
+        backbone="unet",
+        unet_dropout=0,
+        unet_monte_carlo_dropout=0,
+        unet_preactivation=False,
+    ):
         r"""Constructor
-        
+
         Args:
             input_shape (tuple of int): input shape of the images
             nr_labels (int): number of labels for the segmentation

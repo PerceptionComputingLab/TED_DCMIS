@@ -5,17 +5,24 @@ import mp.eval.inference.predictor as pred
 
 
 class PytorchSegmnetationDataset(PytorchDataset):
-    def __init__(self, dataset, ix_lst=None, size=None, norm_key='rescaling',
-                 aug_key='standard', channel_labels=True):
+    def __init__(
+        self,
+        dataset,
+        ix_lst=None,
+        size=None,
+        norm_key="rescaling",
+        aug_key="standard",
+        channel_labels=True,
+    ):
         r"""A torch.utils.data.Dataset for segmentation data.
         Args:
             dataset (SegmentationDataset): a SegmentationDataset
-            ix_lst (list[int)]): list specifying the instances of the dataset. 
+            ix_lst (list[int)]): list specifying the instances of the dataset.
                 If 'None', all not in the hold-out dataset are incuded.
             size (tuple[int]): size as (channels, width, height, Opt(depth))
-            norm_key (str): Normalization strategy, from 
+            norm_key (str): Normalization strategy, from
                 mp.data.pytorch.transformation
-            aug_key (str): Augmentation strategy, from 
+            aug_key (str): Augmentation strategy, from
                 mp.data.pytorch.transformation
             channel_labels (bool): if True, the output has one channel per label
         """
@@ -60,16 +67,31 @@ class PytorchSeg2DDataset(PytorchSegmnetationDataset):
     the specified size, otherwise they are center-cropped and padded if needed.
     """
 
-    def __init__(self, dataset, ix_lst=None, size=(1, 256, 256),
-                 norm_key='rescaling', aug_key='standard', channel_labels=True, resize=False):
+    def __init__(
+        self,
+        dataset,
+        ix_lst=None,
+        size=(1, 256, 256),
+        norm_key="rescaling",
+        aug_key="standard",
+        channel_labels=True,
+        resize=False,
+    ):
         if isinstance(size, int):
             size = (1, size, size)
-        super().__init__(dataset=dataset, ix_lst=ix_lst, size=size,
-                         norm_key=norm_key, aug_key=aug_key, channel_labels=channel_labels)
+        super().__init__(
+            dataset=dataset,
+            ix_lst=ix_lst,
+            size=size,
+            norm_key=norm_key,
+            aug_key=aug_key,
+            channel_labels=channel_labels,
+        )
         assert len(self.size) == 3, "Size should be 2D"
         self.resize = resize
-        self.predictor = pred.Predictor2D(self.instances, size=self.size,
-                                          norm=self.norm, resize=resize)
+        self.predictor = pred.Predictor2D(
+            self.instances, size=self.size, norm=self.norm, resize=resize
+        )
 
         self.idxs = []
         for instance_ix, instance in enumerate(self.instances):
@@ -107,8 +129,11 @@ class PytorchSeg2DDataset(PytorchSegmnetationDataset):
 
     def get_subject_dataloader(self, subject_ix):
         dl_items = []
-        idxs = [idx for idx, (instance_idx, slice_idx) in enumerate(self.idxs)
-                if instance_idx == subject_ix]
+        idxs = [
+            idx
+            for idx, (instance_idx, slice_idx) in enumerate(self.idxs)
+            if instance_idx == subject_ix
+        ]
         for idx in idxs:
             x, y = self.__getitem__(idx)
             dl_items.append((x.unsqueeze_(0), y.unsqueeze_(0)))

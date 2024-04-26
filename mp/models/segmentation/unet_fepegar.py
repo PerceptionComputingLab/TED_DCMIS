@@ -6,30 +6,36 @@
 from typing import Optional
 import torch.nn as nn
 from mp.models.segmentation.segmentation_model import SegmentationModel
-from mp.models.segmentation.model_utils import Encoder, EncodingBlock, Decoder, ConvolutionalBlock
+from mp.models.segmentation.model_utils import (
+    Encoder,
+    EncodingBlock,
+    Decoder,
+    ConvolutionalBlock,
+)
 import torch
 from torchsummary import summary
 
+
 class UNet(SegmentationModel):
     def __init__(
-            self,
-            input_shape,
-            nr_labels,
-            dimensions: int = 2,
-            num_encoding_blocks: int = 5,
-            out_channels_first_layer: int = 64,
-            normalization: Optional[str] = None,
-            pooling_type: str = 'max',
-            upsampling_type: str = 'conv',
-            preactivation: bool = False,
-            residual: bool = False,
-            padding: int = 0,
-            padding_mode: str = 'zeros',
-            activation: Optional[str] = 'ReLU',
-            initial_dilation: Optional[int] = None,
-            dropout: float = 0,
-            monte_carlo_dropout: float = 0,
-            ):
+        self,
+        input_shape,
+        nr_labels,
+        dimensions: int = 2,
+        num_encoding_blocks: int = 5,
+        out_channels_first_layer: int = 64,
+        normalization: Optional[str] = None,
+        pooling_type: str = "max",
+        upsampling_type: str = "conv",
+        preactivation: bool = False,
+        residual: bool = False,
+        padding: int = 0,
+        padding_mode: str = "zeros",
+        activation: Optional[str] = "ReLU",
+        initial_dilation: Optional[int] = None,
+        dropout: float = 0,
+        monte_carlo_dropout: float = 0,
+    ):
         super(UNet, self).__init__(input_shape=input_shape, nr_labels=nr_labels)
 
         in_channels = input_shape[0]
@@ -105,7 +111,7 @@ class UNet(SegmentationModel):
         # Monte Carlo dropout
         self.monte_carlo_layer = None
         if monte_carlo_dropout:
-            dropout_class = getattr(nn, 'Dropout{}d'.format(dimensions))
+            dropout_class = getattr(nn, "Dropout{}d".format(dimensions))
             self.monte_carlo_layer = dropout_class(p=monte_carlo_dropout)
 
         # Classifier
@@ -114,8 +120,11 @@ class UNet(SegmentationModel):
         elif dimensions == 3:
             in_channels = 2 * out_channels_first_layer
         self.classifier = ConvolutionalBlock(
-            dimensions, in_channels, nr_labels,
-            kernel_size=1, activation=None,
+            dimensions,
+            in_channels,
+            nr_labels,
+            kernel_size=1,
+            activation=None,
         )
 
     def forward(self, x):
@@ -126,43 +135,54 @@ class UNet(SegmentationModel):
             x = self.monte_carlo_layer(x)
         return self.classifier(x)
 
+
 class UNet2D(UNet):
     def __init__(self, *args, **kwargs):
-        assert len(args[0]) == 3, "Input shape must have dimensions channels, width, height. Received: {}".format(args[0])
+        assert (
+            len(args[0]) == 3
+        ), "Input shape must have dimensions channels, width, height. Received: {}".format(
+            args[0]
+        )
         predef_kwargs = {}
-        predef_kwargs['dimensions'] = 2
-        predef_kwargs['num_encoding_blocks'] = 5
-        predef_kwargs['out_channels_first_layer'] = 16 #64
-        predef_kwargs['normalization'] = 'batch'
+        predef_kwargs["dimensions"] = 2
+        predef_kwargs["num_encoding_blocks"] = 5
+        predef_kwargs["out_channels_first_layer"] = 16  # 64
+        predef_kwargs["normalization"] = "batch"
         # added TODO
         # predef_kwargs['preactivation'] = True
         preactivation = True
-        # Added this so there is no error between the skip connection and 
+        # Added this so there is no error between the skip connection and
         # feature mas shapes
-        predef_kwargs['padding'] = True
+        predef_kwargs["padding"] = True
         predef_kwargs.update(kwargs)
         super(UNet2D, self).__init__(*args, **predef_kwargs)
 
+
 class UNet3D(UNet):
     def __init__(self, *args, **kwargs):
-        assert len(args[0]) == 4, "Input shape must have dimensions channels, width, height, depth. Received: {}".format(args[0])
+        assert (
+            len(args[0]) == 4
+        ), "Input shape must have dimensions channels, width, height, depth. Received: {}".format(
+            args[0]
+        )
         predef_kwargs = {}
-        predef_kwargs['dimensions'] = 3
-        predef_kwargs['num_encoding_blocks'] = 4
-        predef_kwargs['out_channels_first_layer'] = 8
-        predef_kwargs['normalization'] = 'batch'
-        predef_kwargs['upsampling_type'] = 'linear'
-        predef_kwargs['padding'] = True
+        predef_kwargs["dimensions"] = 3
+        predef_kwargs["num_encoding_blocks"] = 4
+        predef_kwargs["out_channels_first_layer"] = 8
+        predef_kwargs["normalization"] = "batch"
+        predef_kwargs["upsampling_type"] = "linear"
+        predef_kwargs["padding"] = True
         predef_kwargs.update(kwargs)
         super().__init__(*args, **predef_kwargs)
 
-if __name__ == '__main__':
-    device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
+
+if __name__ == "__main__":
+    device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
     # device = torch.device('cpu')
     print(device)
     model = UNet2D((1, 64, 64), 2)
     print(model)
 
     total_params = sum(p.numel() for p in model.parameters())
-    print('total_params:', total_params)
+    print("total_params:", total_params)
     summary(model, (1, 64, 64))

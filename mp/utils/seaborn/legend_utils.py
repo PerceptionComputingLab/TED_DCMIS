@@ -26,10 +26,9 @@ def _remove_empyties_and_duplicates(handles, labels, titles):
 
 
 def _bold_titles(labels, titles):
-    r"""Styles title labels bold.
-    """
-    labels = ['$\\bf{' + label + '}$' if label in titles else label for label in labels]
-    titles = ['$\\bf{' + title + '}$' for title in titles]
+    r"""Styles title labels bold."""
+    labels = ["$\\bf{" + label + "}$" if label in titles else label for label in labels]
+    titles = ["$\\bf{" + title + "}$" for title in titles]
     return labels, titles
 
 
@@ -38,18 +37,18 @@ def _insert_divider_before_titles(handles, labels, titles):
     param titles: elements of 'labels' before which a space should be inserted
     """
     titles = titles[1:]  # Do not need to insert space before first title
-    empty_handle = mpatches.Patch(color='white', alpha=0)
+    empty_handle = mpatches.Patch(color="white", alpha=0)
     space_indexes = [labels.index(title) for title in titles]
     for i in range(len(space_indexes)):
         handles.insert(space_indexes[i], empty_handle)
-        labels.insert(space_indexes[i], '')
+        labels.insert(space_indexes[i], "")
         space_indexes = [i + 1 for i in space_indexes]
     return handles, labels
 
 
 def format_legend(ax, titles):
     r"""Format legend"""
-    if 'numpy' in str(type(ax)):
+    if "numpy" in str(type(ax)):
         ax = ax.copy()[-1]
     # Fetch legend labels and handles
     handles, labels = ax.get_legend_handles_labels()

@@ -11,8 +11,8 @@ import torchio
 import mp.data.pytorch.transformation as trans
 
 
-class Predictor():
-    r"""A predictor recreates a prediction with the correct dimensions from 
+class Predictor:
+    r"""A predictor recreates a prediction with the correct dimensions from
     model outputs. There  different predictors for different PytorchDatasets,
     and these are setted internally with the creation of a PytorchDataset.
     Args:
@@ -61,7 +61,7 @@ class Predictor2D(Predictor):
         # Slides first
         x = subject.x.tensor.permute(3, 0, 1, 2)
         # Get original size
-        original_size = subject['y'].data.shape
+        original_size = subject["y"].data.shape
         original_size_2d = original_size[:3]
 
         pred = []
@@ -70,7 +70,9 @@ class Predictor2D(Predictor):
         with torch.no_grad():
             for slice_idx in range(len(x)):
                 if self.resize:
-                    inputs = trans.resize_2d(x[slice_idx], size=self.size).to(agent.device)
+                    inputs = trans.resize_2d(x[slice_idx], size=self.size).to(
+                        agent.device
+                    )
                     inputs = torch.unsqueeze(inputs, 0)
                     if probabilities:
                         slice_pred_prob = agent.get_outputs(inputs).float()
@@ -79,9 +81,13 @@ class Predictor2D(Predictor):
                         pred_prob.append(slice_pred_prob)
                     else:
                         slice_pred = agent.predict(inputs).float()
-                    pred.append(trans.resize_2d(slice_pred, size=original_size_2d, label=True))
+                    pred.append(
+                        trans.resize_2d(slice_pred, size=original_size_2d, label=True)
+                    )
                 else:
-                    inputs = trans.centre_crop_pad_2d(x[slice_idx], size=self.size).to(agent.device)
+                    inputs = trans.centre_crop_pad_2d(x[slice_idx], size=self.size).to(
+                        agent.device
+                    )
                     inputs = torch.unsqueeze(inputs, 0)
                     if probabilities:
                         slice_pred_prob = agent.get_outputs(inputs).float()
@@ -90,7 +96,9 @@ class Predictor2D(Predictor):
                         pred_prob.append(slice_pred_prob)
                     else:
                         slice_pred = agent.predict(inputs).float()
-                    pred.append(trans.centre_crop_pad_2d(slice_pred, size=original_size_2d))
+                    pred.append(
+                        trans.centre_crop_pad_2d(slice_pred, size=original_size_2d)
+                    )
 
         # Merge slices and rotate so depth last
         pred = torch.stack(pred, dim=0)

@@ -1,6 +1,4 @@
 from mp.models.model import Model
-from mp.models.segmentation.unet_fepegar import UNet2D
-import torch.optim as optim
 
 
 class MAS(Model):
@@ -8,16 +6,17 @@ class MAS(Model):
     as porposed in Importance driven continual learning for segmentation across domains by Oezguen et al., 2020
     """
 
-    def __init__(self,
-                 input_shape=(1, 256, 256),
-                 nr_labels=2,
-                 backbone='unet',
-                 unet_dropout=0,
-                 unet_monte_carlo_dropout=0,
-                 unet_preactivation=False
-                 ):
+    def __init__(
+        self,
+        input_shape=(1, 256, 256),
+        nr_labels=2,
+        backbone="unet",
+        unet_dropout=0,
+        unet_monte_carlo_dropout=0,
+        unet_preactivation=False,
+    ):
         r"""Constructor
-        
+
         Args:
             input_shape (tuple of int): input shape of the images
             nr_labels (int): number of labels for the segmentation

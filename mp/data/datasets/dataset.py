@@ -1,8 +1,9 @@
 # ------------------------------------------------------------------------------
-# Dataset class meant to store general information about dataset and to divide 
-# instances in folds, before converting to a torch.utils.data.Dataset. 
+# Dataset class meant to store general information about dataset and to divide
+# instances in folds, before converting to a torch.utils.data.Dataset.
 # All datasets descend from this Dataset class.
 # ------------------------------------------------------------------------------
+
 
 class Dataset:
     r"""A dataset stores instances.
@@ -11,14 +12,22 @@ class Dataset:
         name (str): name of a dataset
         instances (list[mp.data.datasets.dataset.Instance]): list of Instances
         classes (tuple[str]): tuple with label names
-        hold_out_ixs (list[int]): instances which are not evaluated until the end 
+        hold_out_ixs (list[int]): instances which are not evaluated until the end
         mean_shape (list[int]): mean input shape
         output_shape (list[int]): output shape
         x_norm (tuple[float]): normalization values for the input
     """
 
-    def __init__(self, name, instances, classes=('0'), hold_out_ixs=[],
-                 mean_shape=(1, 32, 32), output_shape=(1, 32, 32), x_norm=None):
+    def __init__(
+        self,
+        name,
+        instances,
+        classes=("0"),
+        hold_out_ixs=[],
+        mean_shape=(1, 32, 32),
+        output_shape=(1, 32, 32),
+        x_norm=None,
+    ):
         self.name = name
         # Sort instances in terms of name
         self.instances = sorted(instances, key=lambda ex: ex.name)
@@ -33,7 +42,7 @@ class Dataset:
         r"""Get class (category) distribution
 
         Args:
-            ixs (list[int]): if not None, distribution for only these indexes. 
+            ixs (list[int]): if not None, distribution for only these indexes.
             Otherwise distribution for all indexes not part of the hold-out.
         """
         if ixs is None:
@@ -46,8 +55,11 @@ class Dataset:
 
     def get_class_instance_ixs(self, class_name, exclude_ixs):
         r"""Get instances for a class, excluding those in exclude_ixs."""
-        return [ix for ix, ex in enumerate(self.instances) if
-                ex.class_ix == self.classes.index(class_name) and ix not in exclude_ixs]
+        return [
+            ix
+            for ix, ex in enumerate(self.instances)
+            if ex.class_ix == self.classes.index(class_name) and ix not in exclude_ixs
+        ]
 
     def get_instance(self, name):
         r"""Get an instance from a name."""
@@ -55,12 +67,18 @@ class Dataset:
         if len(instances) == 0:
             return None
         else:
-            assert len(instances) == 1, "There are more than one instance with that name"
+            assert (
+                len(instances) == 1
+            ), "There are more than one instance with that name"
             return instances[0]
 
     def get_instance_ixs_from_names(self, name_lst):
         r"""Get instance ixs from a list of names."""
-        ixs = [ix for ix, instance in enumerate(self.instances) if instance.name in name_lst]
+        ixs = [
+            ix
+            for ix, instance in enumerate(self.instances)
+            if instance.name in name_lst
+        ]
         return ixs
 
 
@@ -71,13 +89,13 @@ class Instance:
         x (Obj): input, can take different forms depending on the subclass
         y (Obj): ground truth
         name (str): instance name (e.g. file name) for case-wise evaluation
-        class_ix (int): during splitting of the dataset, the resulting subsets 
-            are stratesfied according to this value (i.e. there are about as 
-            many examples of each class on each fold). For classification, 
+        class_ix (int): during splitting of the dataset, the resulting subsets
+            are stratesfied according to this value (i.e. there are about as
+            many examples of each class on each fold). For classification,
             class_ix==y, but can also be used solely for splitting.
-        group_id (int): instances with same 'group id' should always 
-            remain on the same dataset split. A group id could be, for instance, 
-            a patient identifier (the same patient should typically not be in 
+        group_id (int): instances with same 'group id' should always
+            remain on the same dataset split. A group id could be, for instance,
+            a patient identifier (the same patient should typically not be in
             several different splits).
     """
 

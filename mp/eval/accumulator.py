@@ -5,6 +5,7 @@
 import numpy as np
 import torch
 
+
 class Accumulator:
     def __init__(self, keys=None):
         self.values = dict()
@@ -23,7 +24,7 @@ class Accumulator:
     def ensure_key(self, key):
         if key not in self.values:
             self.values[key] = []
-            
+
     def add(self, key, value, count=1):
         self.ensure_key(key)
         if isinstance(value, torch.Tensor):
@@ -44,5 +45,3 @@ class Accumulator:
 
     def get_keys(self):
         return sorted(list(self.values.keys()))
-
-

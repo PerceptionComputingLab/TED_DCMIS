@@ -10,31 +10,39 @@ import math
 import torch
 import torch.nn as nn
 import numpy as np
-from mp.models.segmentation.swin_transformer_unet_skip_expand_decoder_sys import SwinTransformerSys
+from mp.models.segmentation.swin_transformer_unet_skip_expand_decoder_sys import (
+    SwinTransformerSys,
+)
 
 logger = logging.getLogger(__name__)
 
 
 class SwinUnet(nn.Module):
-    def __init__(self, input_shape=96, nr_labels=2, ):
+    def __init__(
+        self,
+        input_shape=96,
+        nr_labels=2,
+    ):
         super(SwinUnet, self).__init__()
         self.num_classes = nr_labels
-        self.swin_unet = SwinTransformerSys(img_size=input_shape,
-                                            patch_size=4,
-                                            in_chans=3,
-                                            num_classes=nr_labels,
-                                            embed_dim=96,
-                                            depths=[2, 2, 2, 2],
-                                            num_heads=[3, 6, 12, 24],
-                                            window_size=6,
-                                            mlp_ratio=4,
-                                            qkv_bias=True,
-                                            qk_scale=None,
-                                            drop_rate=0.0,
-                                            drop_path_rate=0.1,
-                                            ape=False,
-                                            patch_norm=True,
-                                            use_checkpoint=False)
+        self.swin_unet = SwinTransformerSys(
+            img_size=input_shape,
+            patch_size=4,
+            in_chans=3,
+            num_classes=nr_labels,
+            embed_dim=96,
+            depths=[2, 2, 2, 2],
+            num_heads=[3, 6, 12, 24],
+            window_size=6,
+            mlp_ratio=4,
+            qkv_bias=True,
+            qk_scale=None,
+            drop_rate=0.0,
+            drop_path_rate=0.1,
+            ape=False,
+            patch_norm=True,
+            use_checkpoint=False,
+        )
 
     def forward(self, x):
         if x.size()[1] == 1:
@@ -46,7 +54,7 @@ class SwinUnet(nn.Module):
         pretrained_path = config.MODEL.PRETRAIN_CKPT
         if pretrained_path is not None:
             print("pretrained_path:{}".format(pretrained_path))
-            device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
             pretrained_dict = torch.load(pretrained_path, map_location=device)
             if "model" not in pretrained_dict:
                 print("---start load pretrained modle by splitting---")
@@ -58,7 +66,7 @@ class SwinUnet(nn.Module):
                 msg = self.swin_unet.load_state_dict(pretrained_dict, strict=False)
                 # print(msg)
                 return
-            pretrained_dict = pretrained_dict['model']
+            pretrained_dict = pretrained_dict["model"]
             print("---start load pretrained modle of swin encoder---")
 
             model_dict = self.swin_unet.state_dict()
@@ -71,7 +79,11 @@ class SwinUnet(nn.Module):
             for k in list(full_dict.keys()):
                 if k in model_dict:
                     if full_dict[k].shape != model_dict[k].shape:
-                        print("delete:{};shape pretrain:{};shape model:{}".format(k, v.shape, model_dict[k].shape))
+                        print(
+                            "delete:{};shape pretrain:{};shape model:{}".format(
+                                k, v.shape, model_dict[k].shape
+                            )
+                        )
                         del full_dict[k]
 
             msg = self.swin_unet.load_state_dict(full_dict, strict=False)

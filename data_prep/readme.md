@@ -21,13 +21,14 @@ c# Three dataset for continual segmentation
 3. relabel to binary in dataset 'RUNMC', 'BMC'
 
 
-
-
     python prostate_prepare.py
 
-## cardiac segmentation, respectively LV-endo, LV-epi, RV (5 domains)
-[ACDC](https://aistudio.baidu.com/aistudio/datasetdetail/56020)
+## Cardiac segmentation, respectively LV-endo, LV-epi, RV (4 domains)
+[M&M](https://www.ub.edu/mnms/)
 
 1. intensity is rescaled to [0., 1.]
-2. split into 5 group based on information in file Info.cfg
-3. add specific noisy in each group
+2. group by VendorName into 4 domains
+
+
+
+    python cardiacmm_prepare.py

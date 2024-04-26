@@ -19,8 +19,8 @@ class DataGeneratorDiffusionModel:
         self.sqrt_recip_alphas = None
         self.beta = None
         self.betas = None
-        self.device = config['device']
-        self.batch_size = config['batch_szie']
+        self.device = config["device"]
+        self.batch_size = config["batch_szie"]
         self.model = SimpleUnet().to(self.device)
         self.model = torch.load(subset)
         self.T = 300
@@ -31,13 +31,15 @@ class DataGeneratorDiffusionModel:
             return torch.linspace(start, end, timesteps)
 
         self.beta = linear_beta_schedule(self.T)
-        alphas = 1. - self.betas
+        alphas = 1.0 - self.betas
         alphas_cumprod = torch.cumprod(self.alphas, axis=0)
         alphas_cumprod_prev = F.pad(alphas_cumprod[:-1], (1, 0), value=1.0)
         self.sqrt_recip_alphas = torch.sqrt(1.0 / alphas)
         sqrt_alphas_cumprod = torch.sqrt(alphas_cumprod)
-        self.sqrt_one_minus_alphas_cumprod = torch.sqrt(1. - alphas_cumprod)
-        self.posterior_variance = self.betas * (1. - alphas_cumprod_prev) / (1. - alphas_cumprod)
+        self.sqrt_one_minus_alphas_cumprod = torch.sqrt(1.0 - alphas_cumprod)
+        self.posterior_variance = (
+            self.betas * (1.0 - alphas_cumprod_prev) / (1.0 - alphas_cumprod)
+        )
 
     def get_data(self):
         img = torch.randn((self.batch_size, 1, 192, 192)).to(self.device)
@@ -51,13 +53,17 @@ class DataGeneratorDiffusionModel:
         sqrt_one_minus_alphas_cumprod_t = self.get_index_from_list(
             self.sqrt_one_minus_alphas_cumprod, t, x.shape
         )
-        sqrt_recip_alphas_t = self.get_index_from_list(self.sqrt_recip_alphas, t, x.shape)
+        sqrt_recip_alphas_t = self.get_index_from_list(
+            self.sqrt_recip_alphas, t, x.shape
+        )
 
         # Call model (current image - noise prediction)
         model_mean = sqrt_recip_alphas_t * (
-                x - betas_t * self.model(x, t) / sqrt_one_minus_alphas_cumprod_t
+            x - betas_t * self.model(x, t) / sqrt_one_minus_alphas_cumprod_t
         )
-        posterior_variance_t = self.get_index_from_list(self.posterior_variance, t, x.shape)
+        posterior_variance_t = self.get_index_from_list(
+            self.posterior_variance, t, x.shape
+        )
 
         if t == 0:
             return model_mean
@@ -82,31 +88,44 @@ class PredictionDataset(Dataset):
         dataset_path = os.path.join(storage_data_path, subset)
 
         # Fetch all patient/study names
-        if subset == 'DecathlonHippocampus':
-            dataset_path = os.path.join(dataset_path, 'Merged Labels')
-            study_names = set(file_name.split('.nii')[0].split('_gt')[0] for file_name
-                              in os.listdir(dataset_path))
-        elif subset == 'DryadHippocampus':
-            dataset_path = os.path.join(dataset_path, 'Merged Labels', 'Modality[T1w]Resolution[Standard]')
-            study_names = set(file_name.split('.nii')[0].split('_gt')[0] for file_name
-                              in os.listdir(dataset_path))
-        elif subset == 'HarP':
-            study_names = set(os.path.join('Training', file_name.split('.nii')[0].split('_gt')[0]) for file_name in
-                              os.listdir(os.path.join(dataset_path, 'Training'))) | \
-                          set(os.path.join('Validation', file_name.split('.nii')[0].split('_gt')[0]) for file_name in
-                              os.listdir(os.path.join(dataset_path, 'Validation')))
+        if subset == "DecathlonHippocampus":
+            dataset_path = os.path.join(dataset_path, "Merged Labels")
+            study_names = set(
+                file_name.split(".nii")[0].split("_gt")[0]
+                for file_name in os.listdir(dataset_path)
+            )
+        elif subset == "DryadHippocampus":
+            dataset_path = os.path.join(
+                dataset_path, "Merged Labels", "Modality[T1w]Resolution[Standard]"
+            )
+            study_names = set(
+                file_name.split(".nii")[0].split("_gt")[0]
+                for file_name in os.listdir(dataset_path)
+            )
+        elif subset == "HarP":
+            study_names = set(
+                os.path.join("Training", file_name.split(".nii")[0].split("_gt")[0])
+                for file_name in os.listdir(os.path.join(dataset_path, "Training"))
+            ) | set(
+                os.path.join("Validation", file_name.split(".nii")[0].split("_gt")[0])
+                for file_name in os.listdir(os.path.join(dataset_path, "Validation"))
+            )
         else:
-            study_names = set(file_name.split('.nii')[0].split('_gt')[0] for file_name
-                              in os.listdir(dataset_path))
+            study_names = set(
+                file_name.split(".nii")[0].split("_gt")[0]
+                for file_name in os.listdir(dataset_path)
+            )
 
         study_names = list(study_names)
-        self.img_path = [os.path.join(dataset_path, name + '.nii.gz') for name in study_names]
+        self.img_path = [
+            os.path.join(dataset_path, name + ".nii.gz") for name in study_names
+        ]
 
         data_transforms = [
             transforms.Resize(self.size),
             # transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),  # Scales data into [0,1]
-            transforms.Lambda(lambda t: (t * 2) - 1)  # Scale between [-1, 1]
+            transforms.Lambda(lambda t: (t * 2) - 1),  # Scale between [-1, 1]
         ]
         self.transform = transforms.Compose(data_transforms)
 
@@ -118,7 +137,7 @@ class PredictionDataset(Dataset):
         img_image = sitk.GetArrayFromImage(img_image)
         index_n = np.random.randint(0, img_image.shape[0])
         img_image = img_image[index_n]
-        img_image = Image.fromarray(np.uint8(255. * img_image))
+        img_image = Image.fromarray(np.uint8(255.0 * img_image))
         if self.transform:
             img_image = self.transform(img_image)
         return img_image
@@ -128,9 +147,13 @@ class SimpleDataset(Dataset):
     def __init__(self, subset, size=(192, 192)):
         self.size = size
 
-        dataset_path = os.path.join('/home/zhuzhanshi/MedicalCL/storage/data/PseudoData', subset, 'inference')
+        dataset_path = os.path.join(
+            "/home/zhuzhanshi/MedicalCL/storage/data/PseudoData", subset, "inference"
+        )
 
-        self.img_path = [os.path.join(dataset_path, name) for name in os.listdir(dataset_path)]
+        self.img_path = [
+            os.path.join(dataset_path, name) for name in os.listdir(dataset_path)
+        ]
 
         data_transforms = [
             transforms.Resize(self.size),
@@ -150,9 +173,11 @@ class SimpleDataset(Dataset):
         return img_image
 
 
-if __name__ == '__main__':
-    train_dataset = SimpleDataset('I2CVB')
-    train_loader = DataLoader(train_dataset, batch_size=10, num_workers=8, shuffle=False)
+if __name__ == "__main__":
+    train_dataset = SimpleDataset("I2CVB")
+    train_loader = DataLoader(
+        train_dataset, batch_size=10, num_workers=8, shuffle=False
+    )
     for batch, prediction_image in enumerate(train_loader):
         print(prediction_image.shape)
         image = np.array(prediction_image[0][0])

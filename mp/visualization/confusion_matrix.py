@@ -26,8 +26,15 @@ class ConfusionMatrix:
         r"""Set an entry for the confusion matrix."""
         self.cm[self.labels.index(actual)][self.labels.index(predicted)] += count
 
-    def plot(self, path, name='confusion_matrix', label_predicted='Predicted',
-             label_actual='Actual', figure_size=(7, 5), annot=True):
+    def plot(
+        self,
+        path,
+        name="confusion_matrix",
+        label_predicted="Predicted",
+        label_actual="Actual",
+        figure_size=(7, 5),
+        annot=True,
+    ):
         r"""Plot using seaborn."""
         cm = self.cm.copy()
         nr_rows = len(cm)
@@ -35,11 +42,15 @@ class ConfusionMatrix:
         df = pd.DataFrame(cm, columns=[c + 1 for c in range(nr_rows)])
         df = df.drop([0])
         plt.figure()
-        sns.set(rc={'figure.figsize': figure_size})
+        sns.set(rc={"figure.figsize": figure_size})
         ax = sns.heatmap(df, annot=annot)
         ax.set(xlabel=label_predicted, ylabel=label_actual)
-        plt.savefig(os.path.join(path, name + '.png'), facecolor='w',
-                    bbox_inches="tight", dpi=300)
+        plt.savefig(
+            os.path.join(path, name + ".png"),
+            facecolor="w",
+            bbox_inches="tight",
+            dpi=300,
+        )
 
     def get_accuracy(self):
         r"""Get the accuracy."""
